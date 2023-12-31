@@ -252,7 +252,7 @@ if ("html" == OUTMODE):
     lo.write("<head></head>\n")
     lo.write("<body>\n")
 
-lo.write("Worked squares and fields by "+MYCALL+" in WSJT-X\n\n")
+lo.write("Worked squares and fields by "+MYCALL+" in WSJT-X in " + MYSQUARE +"\n\n")
 
 if ("html" == OUTMODE):
     lo.write("<p/>\n")
