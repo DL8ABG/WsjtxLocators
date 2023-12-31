@@ -1,63 +1,76 @@
 #!/usr/bin/python3
 #
-# evaluating logbook of wsjt-x and gain information on worked locator squares
-#
-# Infos from https://de.wikipedia.org/wiki/QTH-Locator
+# Evaluating the WSJT-X logbook to gain information on worked locator squares.
+# The result is given as "locator map" file in html or txt format.
 #
 # Frank Hänsel, DL8ABG
-# 
+#
+# CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+#
+###################################
 # Changelog:
 #
-# 27.12.2023
+# Dec/2023
+# - option for command line parameters
+# - exception handling on file opens
 # - more html implementation
 #   (background color for table cells)
-#
-# 26.12.2023
 # - started implementing html output
-#
-# 23.12.2023
 # - output file for locator output in console during startup
 #
-# 14.09.2021
+# Sep/2021
 # - Initial setup of file
 # - optimisation of prior version
 #
+###################################
 # Ideas:
-# - implement program options:
-#   -t use txt output (html is default)
-#   -o <file> write output to <file> rather than default name
-#   -l <file> read log from <file> rather than from default file name
-#   -h <field> define my home field
-#   -c <call> give my own call to be printed in output
-# - in html: background color for worked field/squares in light/dark brown, rest light blue (earth/ocean)
+# - filter by band and/or mode
+#
+###################################
+
+
+###################################
+# import the packages we need
+###################################
+
+# for sys.exit
+import sys
 
 # use regular expressions
 import re
 
-# this is the square of the user to be shown as a special character
-MYSQUARE="JO52"
+# Use the parser for command line arguments
+from argparse import ArgumentParser
 
-MYCALL="DL8ABG"
+###################################
+# Defintion of standard values
+###################################
 
-WSJTXLOG="wsjtx.log"
+# name of output file
+# will be completed by "." and OUTMODE as suffix
+DEF_LOCOUTPUT="locatormap"
 
-# file to print the output to
-# well be completed by "." and OUTMODE as suffix
-LOCOUTPUT="locatormap"
+# name of WSJT-X logfile
+DEF_WSJTXLOG="wsjtx.log"
 
-# OUTMODE="txt"
-OUTMODE="html"
+# home quare
+DEF_MYSQUARE="JO52"
 
-# background color for own sware in html table
+# own callsign
+DEF_MYCALL="DL8ABG"
+
+
+
+# background color for own square in html table
 BGCOLOR_OWN="#FF0000"
 
 # background color for empty field in html table (blue ocean)
 BGCOLOR_EMPTY="#CCEEFF"
 
-# background color for empty field in html table (light brown earth)
+# background color for worked field in html table (light brown earth)
 BGCOLOR_FIELD="#DFAF9F"
 
-# background color for empty field in html table (dark brown earth)
+# background color for worked squares in html table (dark brown earth)
 BGCOLOR_SQUARE="#994D33"
 
 
@@ -74,17 +87,100 @@ squaresWE = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 # square numbers north to south
 squaresNS = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 
-# Print info to the user
+
+
+###################################
+# evaluate command line parameters
+###################################
+
+## use the argumentparser
+
+# instanciate the parser
+parser = ArgumentParser(description="Generate an overview of worked locators from your wsjt-x logfile",
+                        epilog="\nby DL8ABG")
+
+# choose text output instead of html
+parser.add_argument("-t", "--txt",
+                    action="store_true",
+                    help="use text output instead of html")
+
+# define output file name
+parser.add_argument("-o", "--outfile",
+                    metavar="file",
+                    help="name of output file, the suffix .txt or .html will be added through the output format (default " + DEF_LOCOUTPUT+ ")",
+                    default=DEF_LOCOUTPUT)
+
+# define name of logfile
+#   -l <file> read log from <file> rather than from default file name
+parser.add_argument("-l", "--logfile",
+                    metavar="file",
+                    help="name of wsjt-x logfile (default " + DEF_WSJTXLOG + ")",
+                    default=DEF_WSJTXLOG)
+
+# define your home square
+#   -s <square> define my home field
+parser.add_argument("-s", "--square",
+                    metavar="SQUARE",
+                    help="your home square (default " + DEF_MYSQUARE + ")",
+                    default=DEF_MYSQUARE)
+
+
+# define your callsign
+#   -c <call> give my own call to be printed in output
+parser.add_argument("-c", "--call",
+                    metavar="CALL",
+                    help="your callsign (default " + DEF_MYCALL + ")",
+                    default=DEF_MYCALL)
+
+# extract the results
+args = vars(parser.parse_args())
+
+# print(args)
+
+## Store arguemnts/results in specific variables
+
+LOCOUTPUT = args["outfile"]
+WSJTXLOG  = args["logfile"]
+MYSQUARE  = args["square"].upper()
+MYCALL    = args["call"].upper()
+
+if (args["txt"]):
+    OUTMODE="txt"
+else:
+    OUTMODE="html"
+
+## test validity of parameters
+
+# test if locator is correct
+if (not re.fullmatch(r"[A-R][A-R][0-9][0-9]", MYSQUARE)):
+    print(f"Locator not in correct format (must be e.g. JO52)")
+    sys.exit(1)
+
+
+## Print info to the user
+
 print("reading log file " + WSJTXLOG)
 print("writing locator mat to " + LOCOUTPUT + "." + OUTMODE)
+print("own callsign is " + MYCALL)
+print("home square is " + MYSQUARE)
 
-############
-# Read log file
-############
+###################################
+# read the log file
+###################################
 
 # open the log file
-wlog = open(WSJTXLOG, "r")
-
+try:
+    wlog = open(WSJTXLOG, "r")
+except FileNotFoundError:
+    print(f"File " + WSJTXLOG + " not found.")
+    sys.exit(1)
+except OSError:
+    print(f"OS error occurred trying to open " + WSJTXLOG)
+    sys.exit(1)
+except Exception as err:
+    print(f"Unexpected error opening " + WSJTXLOG + " is",repr(err))
+    sys.exit(1)  
+    
 # here the raw information (squares) from wsjtx log are stored
 LOCS_LOG = [ ]
 
@@ -108,9 +204,9 @@ wlog.close()
 
 print("found " + str(loglines) + " QSOs in log")
 
-############
-# Sort data
-############
+###################################
+# sort the data
+###################################
 
 print("now checking worked squares")
 
@@ -128,12 +224,23 @@ for l in LOCS_LOG:
         FIELDS.append(l[:2])
         
 
-############
-# Write output file
-############
+###################################
+# write output file
+###################################
 
 # open output file
-lo = open(LOCOUTPUT + "." + OUTMODE, "w")
+try:
+    lo = open(LOCOUTPUT + "." + OUTMODE, "w")
+except FileNotFoundError:
+    # this is no error as we want to write the file
+    pass
+except OSError:
+    print(f"OS error occurred trying to open " + LOCOUTPUT)
+    sys.exit(1)
+except Exception as err:
+    print(f"Unexpected error opening " + LOCOUTPUT + " is",repr(err))
+    sys.exit(1)  
+
 
 # show progress to the user
 print("processing ", end="", flush=True)
@@ -144,7 +251,11 @@ if ("html" == OUTMODE):
     lo.write("<html>\n")
     lo.write("<head></head>\n")
     lo.write("<body>\n")
-    lo.write("Worked squares and fields by "+MYCALL+" in WSJT-X\n<p/>\n")
+
+lo.write("Worked squares and fields by "+MYCALL+" in WSJT-X\n\n")
+
+if ("html" == OUTMODE):
+    lo.write("<p/>\n")
     lo.write("<table cellspacing=\"0\" cellpadding=\"2\">\n")
     # define colgroup - there are 10*18 + 2 columns, each should be same with
     lo.write("<colgroup width=\"1*\" span=\"182\">\n")
@@ -371,7 +482,7 @@ if ("html" == OUTMODE):
     lo.write("<p/>\n")
 
 # output statistics
-lo.write(str(len(FIELDS)) + " fields, " + str(len(SQUARES)) + " squares\n")
+lo.write("\n" + str(len(FIELDS)) + " fields, " + str(len(SQUARES)) + " squares\n")
 
 # close the html tags
 if ("html" == OUTMODE):
