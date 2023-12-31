@@ -14,9 +14,10 @@ Just download the python file in an appropriate directory and call it.
 Some options can be given via command line.
 
 
-
+---
 
 Have fun with this tiny program.
 
  vy 73 de DL8ABG
 
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
