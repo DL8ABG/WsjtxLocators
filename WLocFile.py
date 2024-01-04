@@ -10,6 +10,9 @@
 ###################################
 # Changelog:
 #
+# Jan/2024
+# - note in help on using CSV format, not ADIF
+#
 # Dec/2023
 # - option for command line parameters
 # - exception handling on file opens
@@ -96,7 +99,7 @@ squaresNS = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 ## use the argumentparser
 
 # instanciate the parser
-parser = ArgumentParser(description="Generate an overview of worked locators from your wsjt-x logfile",
+parser = ArgumentParser(description="Generate an overview of worked locators from your wsjt-x logfile. It uses the file \"wsjtx.log\" in CSV format and _not_ the ADIF file \"wsjtx_log.adi\".",
                         epilog="\nby DL8ABG")
 
 # choose text output instead of html
