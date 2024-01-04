@@ -8,7 +8,7 @@ This program shows you the sqares and field you have worked in WSJT-X (FT8, FT4,
 ## How it looks like
 Look at the give examples. These are generated with WLocFile and give an impression of what the result to expect.
 
-For viewing the html example, it need to be downloaded and viewd with your favirite web browser. The html does not include any active content (e.g. js).
+For viewing the html example, it need to be downloaded and viewed with your favirite web browser. The html does not include any active content (e.g. js).
 
 ## Installation
 Just download the python file in an appropriate directory and call it.
